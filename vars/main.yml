@@ -1,0 +1,17 @@
+---
+wp_cli_path: /desired/path/to/place/.wp-cli
+backup_path: /desired/path/to/wp-backups
+hostingA:
+    - [ 
+        domain1.tld ,
+        /var/www/vhosts/domain1.tld/httpdocs/blog 
+      ]
+    - [ 
+        domain2.tld ,
+        /var/www/vhosts/domain2.tld/httpdocs/blog
+      ]
+hostingB:
+    - [ 
+        domain3.tld ,
+        /var/www/vhosts/domain3.tld/httpdocs/blog
+      ]

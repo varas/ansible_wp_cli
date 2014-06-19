@@ -1,4 +1,5 @@
-ansible_wp_cli
-==============
+# wp backup & update automation
 
-Ansible role to automate your Wordpress farm backups and updates.
+> Ansible role to automate your Wordpress farm backups and updates. 
+
+

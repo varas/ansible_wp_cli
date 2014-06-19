@@ -1,0 +1,78 @@
+---
+- hosts: [ wp_servers ]
+  gather_facts: false
+
+  tasks:
+
+    #
+    # Setup wp-cli
+    #
+
+    - name: backup dir
+      file: state=directory path={{ backup_path }}
+
+    - name: wp-cli dir
+      file: state=directory path={{ wp_cli_path }}
+
+    - name: wp-cli bin dir
+      file: state=directory path={{ wp_cli_path }}/bin
+
+    - name: wp-cli present
+      get_url: url=https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar dest={{ wp_cli_path }}/bin/wp validate_certs=no
+
+    - name: wp-cli perms
+      file: path={{ wp_cli_path }}/bin/wp owner=root group=root mode=0755
+
+    - name: wp-cli in executable path
+      file: src={{ wp_cli_path }}/bin/wp dest=/usr/local/bin/wp state=link
+
+    #
+    # Test
+    #
+
+    - debug: host={{ item }} msg="host {{ inventory_hostname }} - var_server {{ server }} - var_name {{ item[0] }}"
+      with_nested: server
+      tags: [ test ]
+
+    #
+    # Backup
+    #
+
+    - name: get timestamp for backups
+      shell: date '+%Y_%m_%d_%H%M'
+      register: timestamp
+      tags: [ backup ]
+
+    - name: backup files
+      command: tar -zcvf {{ backup_path }}/{{ item[0] }}.{{ timestamp.stdout }}.tar {{ item[1] }}
+      with_nested: server
+      tags: [ backup ]
+
+    - name: backup db
+      shell: wp db export {{ backup_path }}/{{ item[0] }}.{{ timestamp.stdout }}.sql
+        chdir={{ item[1] }}
+      with_nested: server
+      tags: [ backup ]
+
+    #
+    # Update
+    #
+
+    - name: update core files
+      shell: wp core update
+        chdir={{ item[1] }}
+      with_nested: server
+      tags: [ update, core ]
+
+    - name: update db
+      shell: wp core update-db
+        chdir={{ item[1] }}
+      with_nested: server
+      tags: [ update, core ]
+
+    - name: update plugin files
+      shell: wp plugin update --all
+        chdir={{ item[1] }}
+      with_nested: server
+      tags: [ update, plugins ]
+
